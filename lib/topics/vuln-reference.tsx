@@ -1,18 +1,27 @@
 import { Callout, Table, SectionHeading, SubHeading, T, CodeBlock } from "@/components/ContentComponents";
+import { slideReferences } from "@/lib/slide-references";
 
 export default function VulnReferenceContent() {
+  const refs = slideReferences["vuln-reference"];
+
   return (
     <div className="space-y-1 text-slate-700 leading-relaxed">
 
       <Callout type="info">
         This is a quick-reference page for vulnerabilities covered in the EHAC course, primarily from the PizzaPineapple penetration test case study.
       </Callout>
+      <p className="text-sm">
+        Use this page as the bridge between theory and reporting. It is not just a list of bugs: it shows how a vulnerability is described, evidenced, scored, and remediated in a professional report.
+      </p>
 
-      <SectionHeading id="heartbleed">CVE-2014-0160: Heartbleed</SectionHeading>
+      <SectionHeading id="heartbleed" slideRef={refs.heartbleed}>CVE-2014-0160: Heartbleed</SectionHeading>
 
       <SubHeading>Overview</SubHeading>
       <p className="text-sm">
         <strong>Heartbleed</strong> (CVE-2014-0160) is a critical memory disclosure vulnerability in the OpenSSL cryptographic library. Publicly disclosed on <strong>7 April 2014</strong>.
+      </p>
+      <p className="text-sm mt-2">
+        Heartbleed is useful for exams because it teaches several lessons at once: implementation bugs can be catastrophic even when the underlying protocol is sound, read-only vulnerabilities can still be business-critical, and missing logs can make post-incident certainty impossible.
       </p>
       <Table
         headers={["Field", "Value"]}
@@ -36,6 +45,9 @@ export default function VulnReferenceContent() {
       </ol>
       <p className="text-sm mt-2">
         The bug: OpenSSL allocated the response buffer based on the attacker-controlled <T>payload_length</T> field <em>without verifying this value matches the actual payload length</em>. It then copied <T>payload_length</T> bytes from the payload buffer — reading into adjacent heap memory.
+      </p>
+      <p className="text-sm mt-2">
+        In simpler language: the server trusted the attacker&apos;s claimed length more than the real amount of supplied data. That mismatch is the whole bug.
       </p>
       <CodeBlock lang="Simplified vulnerable code (OpenSSL ≤ 1.0.1f)">
         {`/* payload_length is attacker-controlled — NOT VALIDATED */
@@ -72,6 +84,9 @@ memcpy(bp, p, payload);`}
         {`nmap -sV -p 443 --script ssl-heartbleed 185.220.34.10
 # Returns: | ssl-heartbleed: VULNERABLE`}
       </CodeBlock>
+      <p className="text-sm mt-2">
+        This is also a good example of why vulnerability validation matters. A version banner might suggest risk, but active testing with an NSE script or TLS analysis tool shows whether the service actually behaves as vulnerable.
+      </p>
       <CodeBlock lang="testssl.sh">
         {`testssl.sh --heartbleed 185.220.34.10
 # Returns: Heartbleed (CVE-2014-0160)    VULNERABLE (NOT ok)`}
@@ -85,8 +100,20 @@ memcpy(bp, p, payload);`}
         <li><strong>Rotate all secrets in memory</strong> — database passwords, API keys, any secrets that may have been in heap memory during exposure window.</li>
         <li><strong>GDPR breach assessment</strong> — given no server logs exist, treat as if exploited from provisioning date. Notify DPA if &gt;72 hours (GDPR Article 33).</li>
       </ol>
+      <CodeBlock lang="Heartbleed-related commands you may need">
+        {`# Identify OpenSSL version locally
+openssl version -a
 
-      <SectionHeading id="tls-deprecated">TLS 1.0/1.1 (YORK-002) — High</SectionHeading>
+# Detect remotely
+nmap -sV -p 443 --script ssl-heartbleed target
+testssl.sh --heartbleed target
+
+# Rotate cert workflow (conceptual)
+openssl genrsa -out server.key 4096
+openssl req -new -key server.key -out server.csr`}
+      </CodeBlock>
+
+      <SectionHeading id="tls-deprecated" slideRef={refs["tls-deprecated"]}>TLS 1.0/1.1 (YORK-002) — High</SectionHeading>
       <p className="text-sm">
         TLS 1.0 and 1.1 were deprecated by <strong>RFC 8996</strong> in March 2021 and are no longer supported by modern browsers.
       </p>
@@ -107,8 +134,13 @@ SSLCipherSuite ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:\
                ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305
 SSLHonorCipherOrder on`}
       </CodeBlock>
+      <CodeBlock lang="TLS verification commands">
+        {`testssl.sh --protocols target
+openssl s_client -connect target:443 -tls1
+openssl s_client -connect target:443 -tls1_2`}
+      </CodeBlock>
 
-      <SectionHeading id="http-headers">HTTP Security Headers (YORK-003) — Medium</SectionHeading>
+      <SectionHeading id="http-headers" slideRef={refs["http-headers"]}>HTTP Security Headers (YORK-003) — Medium</SectionHeading>
       <Table
         headers={["Header", "Risk if Absent", "Example Value"]}
         rows={[
@@ -127,8 +159,13 @@ Header always set Referrer-Policy "strict-origin-when-cross-origin"
 Header always set Content-Security-Policy "default-src 'self'; script-src 'self'"
 Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"`}
       </CodeBlock>
+      <CodeBlock lang="Header inspection commands">
+        {`curl -I https://target.example
+nikto -h https://target.example
+burpsuite`}
+      </CodeBlock>
 
-      <SectionHeading id="server-banner">Verbose Server Banner (YORK-004) — Medium</SectionHeading>
+      <SectionHeading id="server-banner" slideRef={refs["server-banner"]}>Verbose Server Banner (YORK-004) — Medium</SectionHeading>
       <p className="text-sm">
         All web servers return verbose <T>Server:</T> and <T>X-Powered-By:</T> response headers disclosing exact software versions to unauthenticated clients.
       </p>
@@ -146,8 +183,14 @@ ServerSignature Off         # Removes version from error pages`}
       <CodeBlock lang="PHP remediation (php.ini)">
         {`expose_php = Off`}
       </CodeBlock>
+      <CodeBlock lang="Banner inspection commands">
+        {`curl -I https://target.example
+nc target.example 80
+GET / HTTP/1.1
+Host: target.example`}
+      </CodeBlock>
 
-      <SectionHeading id="hsts">HSTS Not Enforced on Subdomains (YORK-005) — Low</SectionHeading>
+      <SectionHeading id="hsts" slideRef={refs.hsts}>HSTS Not Enforced on Subdomains (YORK-005) — Low</SectionHeading>
       <p className="text-sm">
         The primary portal sends an <T>HTTP Strict-Transport-Security</T> header, but without <T>includeSubDomains</T> or <T>preload</T> directives. Subdomains remain vulnerable to SSL-stripping attacks.
       </p>
@@ -160,8 +203,12 @@ ServerSignature Off         # Removes version from error pages`}
       <p className="text-sm mt-2">
         After deploying the fixed header with <T>preload</T>, submit the domain to the HSTS preload list at <strong>hstspreload.org</strong>. This bakes the rule into browsers — HTTPS is enforced even on first visit, before any HTTP response is received.
       </p>
+      <CodeBlock lang="HSTS check commands">
+        {`curl -I https://target.example
+testssl.sh --hsts target.example`}
+      </CodeBlock>
 
-      <SectionHeading id="pizzapineapple">PizzaPineapple Case Study Summary</SectionHeading>
+      <SectionHeading id="pizzapineapple" slideRef={refs.pizzapineapple}>PizzaPineapple Case Study Summary</SectionHeading>
       <p className="text-sm">
         A synthetic but technically realistic penetration test conducted by <strong>EHAC Security Consulting Ltd (ESC)</strong> against PizzaPineapple Ltd&apos;s public-facing infrastructure.
       </p>

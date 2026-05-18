@@ -1,4 +1,6 @@
 import React from "react";
+import SlideReferenceBadge from "@/components/SlideReferenceBadge";
+import type { SlideReference } from "@/lib/slide-references";
 
 type CalloutType = "info" | "warning" | "tip" | "danger" | "key";
 
@@ -54,19 +56,29 @@ export function Table({ headers, rows }: { headers: string[]; rows: (string | Re
   );
 }
 
-export function SectionHeading({ id, children }: { id: string; children: React.ReactNode }) {
+export function SectionHeading({ id, children, slideRef }: { id: string; children: React.ReactNode; slideRef?: SlideReference }) {
   return (
     <h2 id={id} className="text-xl font-semibold text-slate-900 mt-10 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2 group scroll-mt-20">
-      {children}
+      <span className="inline-flex min-w-0 items-center gap-2">
+        <span>{children}</span>
+        {slideRef ? (
+          <SlideReferenceBadge slideRef={slideRef} className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100" />
+        ) : null}
+      </span>
       <a href={`#${id}`} className="opacity-0 group-hover:opacity-40 text-teal-500 text-base font-normal hover:opacity-100 transition-opacity">#</a>
     </h2>
   );
 }
 
-export function SubHeading({ id, children }: { id?: string; children: React.ReactNode }) {
+export function SubHeading({ id, children, slideRef }: { id?: string; children: React.ReactNode; slideRef?: SlideReference }) {
   return (
-    <h3 id={id} className="text-base font-semibold text-slate-800 mt-6 mb-2 scroll-mt-20">
-      {children}
+    <h3 id={id} className="group text-base font-semibold text-slate-800 mt-6 mb-2 scroll-mt-20">
+      <span className="inline-flex min-w-0 items-center gap-2">
+        <span>{children}</span>
+        {slideRef ? (
+          <SlideReferenceBadge slideRef={slideRef} className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100" />
+        ) : null}
+      </span>
     </h3>
   );
 }

@@ -9,6 +9,7 @@ const badgeColors: Record<string, string> = {
   Forensics: "bg-blue-50 text-blue-600 border-blue-200",
   Pentest: "bg-rose-50 text-rose-600 border-rose-200",
   Reference: "bg-slate-100 text-slate-600 border-slate-200",
+  Practical: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
 
 export default function Home() {
@@ -23,6 +24,27 @@ export default function Home() {
               {topics.length} topics
             </span>
           </p>
+        </div>
+
+        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <a
+            href="/ehac-master-lecture-slides.pdf"
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm transition hover:border-teal-300 hover:bg-teal-50"
+          >
+            <span className="block font-semibold text-slate-900">Master Lecture PDF</span>
+            <span className="block text-xs text-slate-500 mt-1">Open the combined lecture slides in a new tab.</span>
+          </a>
+          <a
+            href="/ehac-master-practicals-and-solutions.pdf"
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm transition hover:border-emerald-300 hover:bg-emerald-50"
+          >
+            <span className="block font-semibold text-slate-900">Master Practicals PDF</span>
+            <span className="block text-xs text-slate-500 mt-1">Week-ordered lab sheets and available solutions, including the converted Week 6 PDF.</span>
+          </a>
         </div>
 
         <div className="grid grid-cols-1 gap-3">

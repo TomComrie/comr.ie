@@ -45,3 +45,49 @@ pre code {
   content: " #";
   @apply text-teal-400 opacity-60;
 }
+
+.glossary-term {
+  position: relative;
+  display: inline;
+  border-bottom: 1px dotted rgba(13, 148, 136, 0.55);
+  cursor: help;
+  background: none;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  text-align: inherit;
+}
+
+.glossary-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.5rem);
+  z-index: 40;
+  display: none;
+  width: min(24rem, 80vw);
+  transform: translateX(-50%);
+  border: 1px solid rgb(203 213 225);
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.97);
+  color: rgb(241 245 249);
+  padding: 0.75rem 0.9rem;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.glossary-tooltip-title {
+  display: block;
+  font-weight: 700;
+  color: rgb(94 234 212);
+  margin-bottom: 0.2rem;
+}
+
+.glossary-term:hover .glossary-tooltip,
+.glossary-term:focus-visible .glossary-tooltip {
+  display: block;
+}

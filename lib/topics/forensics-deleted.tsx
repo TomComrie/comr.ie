@@ -1,10 +1,13 @@
 import { Callout, Table, SectionHeading, SubHeading, T, CodeBlock } from "@/components/ContentComponents";
+import { slideReferences } from "@/lib/slide-references";
 
 export default function ForensicsDeletedContent() {
+  const refs = slideReferences["forensics-deleted"];
+
   return (
     <div className="space-y-1 text-slate-700 leading-relaxed">
 
-      <SectionHeading id="how-deletion-works">How Deletion Works</SectionHeading>
+      <SectionHeading id="how-deletion-works" slideRef={refs["how-deletion-works"]}>How Deletion Works</SectionHeading>
       <p>
         When you delete a file in Windows, the OS does <strong>not</strong> overwrite the file&apos;s contents. Instead it:
       </p>
@@ -32,8 +35,17 @@ export default function ForensicsDeletedContent() {
       <Callout type="warning">
         SSDs with TRIM enabled can destroy evidence rapidly. On SSDs, &quot;deleted&quot; data may be gone within seconds. Always check whether the device is an SSD and whether TRIM is enabled before expecting recovery.
       </Callout>
+      <CodeBlock lang="Deletion-related commands and checks">
+        {`# Windows
+fsutil behavior query DisableDeleteNotify
+dir /a C:\$Recycle.Bin
 
-      <SectionHeading id="mft-recovery">MFT Record Recovery</SectionHeading>
+# Linux forensic tools
+fls -d disk.img
+istat disk.img <inode>`}
+      </CodeBlock>
+
+      <SectionHeading id="mft-recovery" slideRef={refs["mft-recovery"]}>MFT Record Recovery</SectionHeading>
       <p className="text-sm">
         Even after deletion, the MFT record persists until the OS reuses it for a new file. The record still contains:
       </p>
@@ -47,7 +59,7 @@ export default function ForensicsDeletedContent() {
         Tools like <strong>Autopsy</strong>, <strong>Recuva</strong>, and <strong>TestDisk</strong> parse the MFT for &quot;not in use&quot; records to recover deleted files.
       </p>
 
-      <SectionHeading id="file-carving">File Carving</SectionHeading>
+      <SectionHeading id="file-carving" slideRef={refs["file-carving"]}>File Carving</SectionHeading>
       <p className="text-sm">
         <strong>File carving</strong> reconstructs files directly from raw disk data, without relying on the filesystem metadata. It scans for known file <strong>headers</strong> (magic bytes) and <strong>footers</strong> in unallocated space.
       </p>
@@ -82,8 +94,11 @@ export default function ForensicsDeletedContent() {
       <Callout type="warning">
         File carving cannot recover filenames or directory paths — only file content. It also generates false positives (random data that matches a header). All recovered files need manual verification.
       </Callout>
+      <Callout type="info" title="Transcript Sidenote">
+        The week 11 lecture connected file carving to the Linux <T>file</T> command and the magic-byte idea more explicitly: many tools identify file types by looking at the starting bytes rather than trusting extensions. That is why carving can pull meaningful artefacts out of raw space even when the original filename has gone.
+      </Callout>
 
-      <SectionHeading id="ads">Alternate Data Streams (ADS)</SectionHeading>
+      <SectionHeading id="ads" slideRef={refs.ads}>Alternate Data Streams (ADS)</SectionHeading>
       <p className="text-sm">
         NTFS supports multiple named <strong>data streams</strong> per file. Every file has a default (unnamed) data stream. Additional named streams are called <strong>Alternate Data Streams</strong>.
       </p>
@@ -114,8 +129,11 @@ Get-Item file.txt -Stream *     # PowerShell`}
       <p className="text-sm">
         ADS exist <strong>only on NTFS</strong>. Copying a file to FAT, exFAT, or a network share that doesn&apos;t support ADS will strip all alternate streams silently.
       </p>
+      <Callout type="info" title="Transcript Sidenote">
+        The transcript framed ADS in two ways at once: historically useful for hiding malicious content, but also capable of carrying legitimate rich metadata. That is why you should think of ADS as a storage mechanism that can be benign or suspicious depending on context, not as malware by definition.
+      </Callout>
 
-      <SectionHeading id="zone-identifier">Zone.Identifier (Mark of the Web)</SectionHeading>
+      <SectionHeading id="zone-identifier" slideRef={refs["zone-identifier"]}>Zone.Identifier (Mark of the Web)</SectionHeading>
       <p className="text-sm">
         When a file is downloaded from the internet, Windows automatically attaches a <T>Zone.Identifier</T> ADS. This is commonly called the <strong>Mark of the Web (MOTW)</strong>.
       </p>
@@ -141,8 +159,11 @@ HostUrl=https://example.com/downloads/file.exe`}
       <p className="text-sm">
         Windows Explorer&apos;s &quot;Unblock&quot; checkbox (in file properties) removes the Zone.Identifier ADS. In forensics, the absence of a Zone.Identifier on a suspicious executable could mean: (a) it was manually copied/unblocked, or (b) it arrived via a method that doesn&apos;t create MOTW (USB drive, network share, archive extraction).
       </p>
+      <Callout type="info" title="Transcript Sidenote">
+        The lecture expanded the operational meaning of these zone values: the Zone.Identifier stream is what helps Windows decide whether to show the user a caution prompt for internet-downloaded content. That makes it a practical trust artefact as well as a forensic one.
+      </Callout>
 
-      <SectionHeading id="recycle-bin">Recycle Bin Forensics</SectionHeading>
+      <SectionHeading id="recycle-bin" slideRef={refs["recycle-bin"]}>Recycle Bin Forensics</SectionHeading>
       <p className="text-sm">
         When a file is deleted to the Recycle Bin, Windows creates two files:
       </p>
@@ -163,8 +184,18 @@ HostUrl=https://example.com/downloads/file.exe`}
       <Callout type="tip">
         If you find a file in <T>$Recycle.Bin</T>, always look at the corresponding <T>$I</T> file — it contains the original path and deletion time, which is often more valuable than the file content itself.
       </Callout>
+      <CodeBlock lang="Recycle Bin commands">
+        {`# Windows live system
+dir /a /s C:\$Recycle.Bin
 
-      <SectionHeading id="vss">Volume Shadow Copies (VSS)</SectionHeading>
+# PowerShell
+Get-ChildItem C:\$Recycle.Bin -Recurse -Force
+
+# SID mapping
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList"`}
+      </CodeBlock>
+
+      <SectionHeading id="vss" slideRef={refs.vss}>Volume Shadow Copies (VSS)</SectionHeading>
       <p className="text-sm">
         Windows creates <strong>Volume Shadow Copies</strong> (snapshots) of volumes at certain events (System Restore, Windows Backup, Windows Update). These can preserve older versions of files that have since been deleted or modified.
       </p>

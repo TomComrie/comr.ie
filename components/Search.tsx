@@ -21,7 +21,7 @@ export default function Search() {
   const router = useRouter();
 
   const search = useCallback((q: string) => {
-    if (!q.trim()) { setResults([]); return; }
+    if (!q.trim() || q.startsWith("!")) { setResults([]); return; }
     const lower = q.toLowerCase();
     const found: Result[] = [];
     for (const topic of topics) {
@@ -77,6 +77,38 @@ export default function Search() {
     setQuery("");
   };
 
+  const handleSubmit = (q: string) => {
+    if (q.startsWith("!")) {
+      const rest = q.slice(1).trim();
+
+      if (rest.toLowerCase() === "clear") {
+        localStorage.removeItem("ai_history");
+        setOpen(false);
+        setQuery("");
+        return;
+      }
+
+      const changeMatch = rest.match(/^change\s+(\d+)$/i);
+      if (changeMatch) {
+        const idx = parseInt(changeMatch[1], 10);
+        if (idx >= 1 && idx <= 4) {
+          localStorage.setItem("ai_model_index", String(idx - 1));
+        }
+        setOpen(false);
+        setQuery("");
+        return;
+      }
+
+      if (rest) {
+        localStorage.setItem("ai_query", rest);
+        router.push("/notes");
+        setOpen(false);
+        setQuery("");
+      }
+      return;
+    }
+  };
+
   return (
     <div ref={ref} className="relative w-full max-w-sm">
       <div className="relative">
@@ -98,7 +130,10 @@ export default function Search() {
           onKeyDown={(e) => {
             if (e.key === "ArrowDown") setFocused((f) => Math.min(f + 1, results.length - 1));
             if (e.key === "ArrowUp") setFocused((f) => Math.max(f - 1, 0));
-            if (e.key === "Enter" && results[focused]) navigate(results[focused]);
+            if (e.key === "Enter") {
+              if (query.startsWith("!")) handleSubmit(query);
+              else if (results[focused]) navigate(results[focused]);
+            }
           }}
           className="w-full border border-slate-200 rounded-xl pl-9 pr-16 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder:text-slate-400"
         />
@@ -129,7 +164,7 @@ export default function Search() {
         </div>
       )}
 
-      {open && query.trim() && results.length === 0 && (
+      {open && query.trim() && !query.startsWith("!") && results.length === 0 && (
         <div className="absolute top-full mt-1.5 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 px-4 py-3">
           <p className="text-sm text-slate-400">No results for &ldquo;{query}&rdquo;</p>
         </div>

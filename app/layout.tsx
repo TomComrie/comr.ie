@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { GlossaryPanelProvider } from "@/components/GlossaryPanel";
+import { PdfViewerProvider } from "@/components/PdfViewer";
+import { AiProvider } from "@/lib/ai-context";
 import "./globals.css";
 
 const ibmSans = IBM_Plex_Sans({
@@ -30,7 +33,11 @@ export default function RootLayout({
       <body
         className={`${ibmSans.variable} ${ibmMono.variable} font-sans bg-white text-slate-900 antialiased`}
       >
-        {children}
+        <GlossaryPanelProvider>
+          <PdfViewerProvider>
+            <AiProvider>{children}</AiProvider>
+          </PdfViewerProvider>
+        </GlossaryPanelProvider>
       </body>
     </html>
   );

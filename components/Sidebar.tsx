@@ -1,7 +1,9 @@
 "use client";
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { topics } from "@/lib/notes-data";
+import { useAiError } from "@/lib/ai-context";
 
 const badgeColors: Record<string, string> = {
   "Web Security": "bg-orange-50 text-orange-600",
@@ -9,10 +11,18 @@ const badgeColors: Record<string, string> = {
   Forensics: "bg-blue-50 text-blue-600",
   Pentest: "bg-rose-50 text-rose-600",
   Reference: "bg-slate-100 text-slate-600",
+  Practical: "bg-emerald-50 text-emerald-600",
 };
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { hasError, setHasError } = useAiError();
+
+  useEffect(() => {
+    if (hasError && pathname !== "/notes") {
+      setHasError(false);
+    }
+  }, [pathname, hasError, setHasError]);
 
   const groups = [
     { label: "Web Security", slugs: ["xss", "steganography"] },
@@ -31,6 +41,20 @@ export default function Sidebar() {
       label: "Penetration Testing",
       slugs: ["pentest-methodology", "pentest-reporting", "vuln-reference"],
     },
+    {
+      label: "Reference",
+      slugs: ["exam-info", "glossary", "programming-languages"],
+    },
+    {
+      label: "Practical Walkthroughs",
+      slugs: [
+        "exam-cheatsheet",
+        "practical-linux-basics",
+        "practical-web-security",
+        "practical-reverse-engineering",
+        "practical-forensics-labs",
+      ],
+    },
   ];
 
   return (
@@ -40,9 +64,11 @@ export default function Sidebar() {
           <span className="font-semibold text-slate-900 text-sm tracking-tight group-hover:text-teal-700 transition-colors">
             EHAC Notes
           </span>
-          <span className="block text-xs text-slate-400 mt-0.5 font-mono">
-            notes.comr.ie
-          </span>
+          {!hasError && (
+            <span className="block text-xs text-slate-400 mt-0.5 font-mono">
+              notes.comr.ie
+            </span>
+          )}
         </Link>
       </div>
 

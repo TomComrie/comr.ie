@@ -1,22 +1,43 @@
 import { Callout, Table, SectionHeading, SubHeading, T, CodeBlock, Steps } from "@/components/ContentComponents";
+import { slideReferences } from "@/lib/slide-references";
 
 export default function RegistryContent() {
+  const refs = slideReferences.registry;
+
   return (
     <div className="space-y-1 text-slate-700 leading-relaxed">
 
-      <SectionHeading id="registry-intro">What is the Windows Registry?</SectionHeading>
+      <Callout type="info">
+        Beginner mental model: the Windows Registry is the operating system&apos;s central configuration database. Instead of configuration being spread across lots of text files, Windows stores huge amounts of system and user state in a structured tree of keys and values.
+      </Callout>
+
+      <SectionHeading id="registry-intro" slideRef={refs["registry-intro"]}>What is the Windows Registry?</SectionHeading>
       <p>
         The <strong>Windows Registry</strong> is a centralised hierarchical database that stores configuration settings for almost every aspect of a Windows system — the OS itself, installed software, hardware devices, network settings, and a detailed record of user activity.
       </p>
       <Callout type="key">
         For a forensic examiner, the Registry is one of the richest evidence sources available. It records connected USB devices (ever), recently opened files, typed URLs, network connections, user accounts, autostart entries (malware persistence), time zone, installed software, and much more.
       </Callout>
+      <p className="text-sm mt-2">
+        This is why registry questions appear so often in forensics teaching: one source can answer parts of <em>who</em>, <em>what</em>, <em>when</em>, and <em>how</em> if you know which paths to inspect.
+      </p>
       <p className="text-sm">
         <strong>Linux</strong> has no registry equivalent — configuration is distributed across <T>/etc</T> (system), <T>~/.config</T> (user), and application-specific locations.<br />
         <strong>macOS</strong> uses <T>.plist</T> XML files in <T>~/Library/Preferences</T>.
       </p>
+      <CodeBlock lang="Basic registry access commands">
+        {`# Windows command line
+reg query HKLM\SOFTWARE
 
-      <SectionHeading id="root-keys">Root Keys (Hives)</SectionHeading>
+# PowerShell
+Get-ChildItem Registry::HKEY_LOCAL_MACHINE\SOFTWARE
+
+# Offline hive analysis example tools
+regripper -r NTUSER.DAT -f recentdocs
+python-registry`}
+      </CodeBlock>
+
+      <SectionHeading id="root-keys" slideRef={refs["root-keys"]}>Root Keys (Hives)</SectionHeading>
       <p className="text-sm">
         The Registry is a tree of <strong>keys</strong>, <strong>sub-keys</strong>, and <strong>values</strong>. There are five top-level &quot;root&quot; keys:
       </p>
@@ -34,7 +55,7 @@ export default function RegistryContent() {
         In forensic work you typically work with HKLM (machine-wide) and HKU/NTUSER.DAT (user-specific). HKCR and HKCC are derived from HKLM and SYSTEM hive — they&apos;re virtual views.
       </Callout>
 
-      <SectionHeading id="data-types">Registry Data Types</SectionHeading>
+      <SectionHeading id="data-types" slideRef={refs["data-types"]}>Registry Data Types</SectionHeading>
       <Table
         headers={["Type", "Description", "Use Case"]}
         rows={[
@@ -50,9 +71,12 @@ export default function RegistryContent() {
         Negated key names: <T>NoInteractiveServices = 0x00000000 (0)</T> means interactive services <em>are</em> enabled (double negative). Watch for 0 = enabled patterns.
       </Callout>
 
-      <SectionHeading id="hives">Registry Hives (Files on Disk)</SectionHeading>
+      <SectionHeading id="hives" slideRef={refs.hives}>Registry Hives (Files on Disk)</SectionHeading>
       <p className="text-sm">
         The &quot;live&quot; registry is assembled from separate files called <strong>hives</strong>. In forensic work, you read these files directly from the disk image — this is called working with the <em>offline registry</em>.
+      </p>
+      <p className="text-sm mt-2">
+        The live registry that a user sees in <T>regedit</T> is a runtime view. Forensics usually cares about the underlying hive files because they can be examined from an image without booting the suspect system.
       </p>
 
       <SubHeading>System Hives — <T>C:\Windows\System32\Config\</T></SubHeading>
@@ -65,6 +89,17 @@ export default function RegistryContent() {
           ["SOFTWARE", "Installed applications, file associations, OS settings", "Installed software, autorun, network"],
         ]}
       />
+      <CodeBlock lang="Offline hive workflow">
+        {`# Typical hive paths in an image mount
+C:\Windows\System32\Config\SAM
+C:\Windows\System32\Config\SYSTEM
+C:\Windows\System32\Config\SOFTWARE
+C:\Users\<user>\NTUSER.DAT
+
+# Example RegRipper usage
+rip.exe -r NTUSER.DAT -f recentdocs
+rip.exe -r SYSTEM -f timezone`}
+      </CodeBlock>
 
       <SubHeading>User Hive — <T>%USERPROFILE%\NTUSER.DAT</T></SubHeading>
       <p className="text-sm">
@@ -90,7 +125,7 @@ export default function RegistryContent() {
         ]}
       />
 
-      <SectionHeading id="forensic-value">Forensic Value — Key Locations</SectionHeading>
+      <SectionHeading id="forensic-value" slideRef={refs["forensic-value"]}>Forensic Value — Key Locations</SectionHeading>
       <Table
         headers={["Artefact", "Registry Path", "Data"]}
         rows={[
@@ -109,7 +144,7 @@ export default function RegistryContent() {
         ]}
       />
 
-      <SectionHeading id="guids-sids">GUIDs and SIDs</SectionHeading>
+      <SectionHeading id="guids-sids" slideRef={refs["guids-sids"]}>GUIDs and SIDs</SectionHeading>
 
       <SubHeading>GUID (Globally Unique Identifier)</SubHeading>
       <p className="text-sm">
@@ -144,13 +179,19 @@ export default function RegistryContent() {
         To map a SID to a username: <T>HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\[SID]</T> → look at <T>ProfileImagePath</T> value.
       </Callout>
 
-      <SectionHeading id="usb-forensics">USB Device Forensics</SectionHeading>
+      <SectionHeading id="usb-forensics" slideRef={refs["usb-forensics"]}>USB Device Forensics</SectionHeading>
       <p className="text-sm">
         The Registry permanently records <em>every</em> USB device ever connected — even after the device is removed, the record remains. This is one of the most powerful forensic artefacts in Windows.
       </p>
       <Callout type="key">
         The full USB picture requires correlating four Registry locations plus Event Logs and setupapi.dev.log to establish Who / What / When.
       </Callout>
+      <Callout type="info" title="Transcript Sidenote">
+        The transcript (from the practitioner who did forensic work for law enforcement) reinforces: <strong>"People very confidently say the Last Write time is absolutely the last time the device was plugged in — but there are edge cases."</strong> The enumerator may update keys independently on some Windows versions. Always corroborate insertion times against Event Logs (USB connection/disconnection events) and <T>setupapi.dev.log</T> (first installation time). If the logs and registry tell different stories, that itself is a finding.
+      </Callout>
+      <p className="text-sm mt-2">
+        That word <strong>correlating</strong> is important. Rarely does one registry key answer the whole question alone. Good forensic reasoning comes from combining registry, log, and filesystem artefacts until they support the same story.
+      </p>
 
       <Steps items={[
         {
@@ -182,8 +223,17 @@ export default function RegistryContent() {
           ["setupapi.dev.log", "First installation time — the most reliable timestamp for first connection"],
         ]}
       />
+      <CodeBlock lang="USB forensics commands">
+        {`# Query live registry locations
+reg query "HKLM\SYSTEM\CurrentControlSet\Enum\USB"
+reg query "HKLM\SYSTEM\CurrentControlSet\Enum\USBSTOR"
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList"
 
-      <SectionHeading id="registry-timestamps">Registry Timestamps</SectionHeading>
+# Device install log
+type C:\Windows\inf\setupapi.dev.log`}
+      </CodeBlock>
+
+      <SectionHeading id="registry-timestamps" slideRef={refs["registry-timestamps"]}>Registry Timestamps</SectionHeading>
       <p className="text-sm">
         Every registry key has a <strong>&quot;Last Write&quot; timestamp</strong> — the time the key or any of its values was last modified. This is stored in UTC in Windows FILETIME format.
       </p>

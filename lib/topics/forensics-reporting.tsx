@@ -1,10 +1,13 @@
-import { Callout, Table, SectionHeading, SubHeading, T } from "@/components/ContentComponents";
+import { Callout, Table, SectionHeading, SubHeading, T, CodeBlock } from "@/components/ContentComponents";
+import { slideReferences } from "@/lib/slide-references";
 
 export default function ForensicsReportingContent() {
+  const refs = slideReferences["forensics-reporting"];
+
   return (
     <div className="space-y-1 text-slate-700 leading-relaxed">
 
-      <SectionHeading id="analysis-vs-interpretation">Analysis vs Interpretation</SectionHeading>
+      <SectionHeading id="analysis-vs-interpretation" slideRef={refs["analysis-vs-interpretation"]}>Analysis vs Interpretation</SectionHeading>
       <p>
         Two distinct phases of digital forensics work:
       </p>
@@ -18,8 +21,16 @@ export default function ForensicsReportingContent() {
       <Callout type="key">
         Analysis is objective. Interpretation is where expert judgement is applied. You must clearly distinguish the two in a report — present findings first, then interpretations.
       </Callout>
+      <CodeBlock lang="Useful reporting workflow commands">
+        {`# Hash evidence for report appendix
+sha256sum disk01.img
 
-      <SectionHeading id="5wh">The 5WH Framework</SectionHeading>
+# Build body of evidence from commands already run
+log2timeline.py timeline.plaso mounted_image/
+psort.py -o l2tcsv timeline.plaso > timeline.csv`}
+      </CodeBlock>
+
+      <SectionHeading id="5wh" slideRef={refs["5wh"]}>The 5WH Framework</SectionHeading>
       <p className="text-sm">
         The 5WH questions form the framework for synthesising evidence into a coherent narrative:
       </p>
@@ -44,7 +55,7 @@ export default function ForensicsReportingContent() {
         ))}
       </div>
 
-      <SectionHeading id="attribution">The Attribution Problem</SectionHeading>
+      <SectionHeading id="attribution" slideRef={refs.attribution}>The Attribution Problem</SectionHeading>
       <p className="text-sm">
         Digital evidence is very good at showing <em>which account</em> performed an action. It is far weaker at proving <em>which person</em> was using that account at the time.
       </p>
@@ -62,7 +73,7 @@ export default function ForensicsReportingContent() {
         <li><strong>Biometric data</strong> — fingerprint/face ID logon if available</li>
       </ul>
 
-      <SectionHeading id="golden-rule">The Golden Rule</SectionHeading>
+      <SectionHeading id="golden-rule" slideRef={refs["golden-rule"]}>The Golden Rule</SectionHeading>
       <div className="my-4 p-6 bg-slate-900 text-white rounded-2xl text-center">
         <p className="text-lg font-semibold mb-1">Assume nothing.</p>
         <p className="text-lg font-semibold mb-1">Believe nothing.</p>
@@ -73,7 +84,7 @@ export default function ForensicsReportingContent() {
         Confirmation bias — starting with a conclusion and looking for evidence to support it — is a serious professional risk. A forensic examiner who sets out to &quot;prove&quot; guilt may miss exculpatory evidence and fail under cross-examination.
       </p>
 
-      <SectionHeading id="report-structure">Report Structure</SectionHeading>
+      <SectionHeading id="report-structure" slideRef={refs["report-structure"]}>Report Structure</SectionHeading>
       <p className="text-sm">
         A forensic report (lab report or expert witness report) follows a standard structure:
       </p>
@@ -107,8 +118,14 @@ export default function ForensicsReportingContent() {
         <li>References to scene photographs or other scientists&apos; statements</li>
         <li>The examiner&apos;s qualifications and experience</li>
       </ul>
+      <CodeBlock lang="Practical report artefact collection">
+        {`# Common evidence outputs to preserve for reporting
+sha256sum evidence.img > hashes.txt
+wevtutil qe Security /f:text > security-log.txt
+reg query HKLM\SYSTEM > system-registry.txt`}
+      </CodeBlock>
 
-      <SectionHeading id="plain-language">Plain Language Requirement</SectionHeading>
+      <SectionHeading id="plain-language" slideRef={refs["plain-language"]}>Plain Language Requirement</SectionHeading>
       <Callout type="key">
         Your report may be read by a judge, a jury, and opposing counsel — none of whom have a technical background. You must explain every finding in plain language. If you cannot explain it plainly, you do not yet fully understand it.
       </Callout>
@@ -123,7 +140,7 @@ export default function ForensicsReportingContent() {
         <li>State uncertainty explicitly — &quot;This is consistent with X&quot; vs &quot;This proves X&quot;</li>
       </ul>
 
-      <SectionHeading id="planning">Planning & Preparation</SectionHeading>
+      <SectionHeading id="planning" slideRef={refs.planning}>Planning & Preparation</SectionHeading>
       <SubHeading>Why Plan Before an Incident?</SubHeading>
       <p className="text-sm">
         An organisation that only starts thinking about forensic readiness after an incident is at a serious disadvantage. Evidence may be lost, staff may panic, and legal obligations may be missed.

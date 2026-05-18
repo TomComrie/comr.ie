@@ -1,10 +1,17 @@
 import { Callout, Table, SectionHeading, SubHeading, T, CodeBlock } from "@/components/ContentComponents";
+import { slideReferences } from "@/lib/slide-references";
 
 export default function ForensicsFilesystemsContent() {
+  const refs = slideReferences["forensics-filesystems"];
+
   return (
     <div className="space-y-1 text-slate-700 leading-relaxed">
 
-      <SectionHeading id="ntfs">NTFS (New Technology File System)</SectionHeading>
+      <Callout type="info">
+        Beginner mental model: a file system is the operating system&apos;s filing system plus bookkeeping system. It decides where file content lives, where names live, and how the system remembers timestamps, permissions, and deleted-space state.
+      </Callout>
+
+      <SectionHeading id="ntfs" slideRef={refs.ntfs}>NTFS (New Technology File System)</SectionHeading>
       <p>
         <strong>NTFS</strong> is the standard Windows filesystem since Windows NT. It&apos;s rich in forensic artefacts — far more so than FAT.
       </p>
@@ -19,6 +26,9 @@ export default function ForensicsFilesystemsContent() {
         <li>Supports <strong>file permissions</strong> (ACLs)</li>
         <li>NTFS volumes use cluster addressing; typical cluster size: 4KB</li>
       </ul>
+      <p className="text-sm mt-2">
+        Forensics likes NTFS because it stores a lot of metadata. That metadata often survives longer than users expect, especially where file records or timestamps remain even after deletion.
+      </p>
 
       <SubHeading>Key NTFS System Files</SubHeading>
       <Table
@@ -35,8 +45,21 @@ export default function ForensicsFilesystemsContent() {
           ["$UpCase", "Uppercase mapping table (case-insensitive filenames)"],
         ]}
       />
+      <CodeBlock lang="Useful NTFS-focused commands and tools">
+        {`# Identify filesystem types
+fsstat disk.img
+fls -r disk.img | less
 
-      <SectionHeading id="fat">FAT / FAT32</SectionHeading>
+# Sleuth Kit timeline prep
+istat disk.img <inode>
+icat disk.img <inode> > recovered.bin
+
+# Windows live system examples
+fsutil fsinfo ntfsinfo C:
+dir /r`}
+      </CodeBlock>
+
+      <SectionHeading id="fat" slideRef={refs.fat}>FAT / FAT32</SectionHeading>
       <p className="text-sm">
         <strong>FAT (File Allocation Table)</strong> is an older filesystem used on USB drives, SD cards, and floppy disks. FAT32 supports volumes up to 2TB and files up to 4GB.
       </p>
@@ -57,10 +80,16 @@ export default function ForensicsFilesystemsContent() {
         FAT timestamps are stored in <strong>local time</strong>. When examining a FAT device, you must know the timezone the device was operating in to convert correctly. NTFS timestamps are always UTC — simpler.
       </Callout>
 
-      <SectionHeading id="macb">MACB Timestamps</SectionHeading>
+      <SectionHeading id="macb" slideRef={refs.macb}>MACB Timestamps</SectionHeading>
       <p>
         NTFS stores four timestamps per file. The acronym <strong>MACB</strong> is used to remember them:
       </p>
+      <p className="text-sm mt-2">
+        Students often confuse <strong>Modified</strong> and <strong>Changed</strong>. Modified refers to file content. Changed refers to the metadata record itself. A rename, permission change, or some move operations can update Changed without changing the file&apos;s actual content.
+      </p>
+      <Callout type="info" title="Transcript Sidenote">
+        The week 11 lecture highlighted a classic confusion point here: people often assume the <strong>C</strong> in MACB means created, but in this context it means <strong>Changed</strong> to the record or metadata. The &quot;created&quot; concept is the <strong>B</strong> field, often described as &quot;Born&quot;.
+      </Callout>
 
       <Table
         headers={["Letter", "Attribute", "Updated When"]}
@@ -98,8 +127,21 @@ export default function ForensicsFilesystemsContent() {
       <Callout type="tip">
         Exam pattern: &quot;A file shows Modified = 2020-01-01, Created = 2024-05-01. Is this suspicious?&quot; — No! This is expected for a file copied from another volume. Modified inherits the original write time; Born is when it arrived on this volume.
       </Callout>
+      <Callout type="info" title="Transcript Sidenote">
+        The transcript spent extra time on this exact point: a file being <em>created later than it was modified</em> can feel impossible at first, but copying behavior and the way different timestamps are set can produce exactly that outcome without any malicious manipulation.
+      </Callout>
+      <CodeBlock lang="Timestamp inspection commands">
+        {`# Linux stat output
+stat suspicious.docx
 
-      <SectionHeading id="mft">Master File Table (MFT)</SectionHeading>
+# Sleuth Kit metadata view
+istat disk.img <inode>
+
+# Windows PowerShell
+Get-Item suspicious.docx | Format-List *time*`}
+      </CodeBlock>
+
+      <SectionHeading id="mft" slideRef={refs.mft}>Master File Table (MFT)</SectionHeading>
       <p className="text-sm">
         The MFT is a special file (<T>$MFT</T>) containing one 1KB record for every file and directory on the volume. Each record contains attributes describing that file.
       </p>
@@ -118,7 +160,7 @@ export default function ForensicsFilesystemsContent() {
         <strong>Resident data:</strong> If a file is small (roughly &lt;700 bytes), its actual content is stored directly within the MFT record in the <T>$DATA</T> attribute. This means the file is &quot;in the MFT&quot; and doesn&apos;t occupy separate clusters. This has important implications for slack space and recovery.
       </p>
 
-      <SectionHeading id="slack-space">Slack Space</SectionHeading>
+      <SectionHeading id="slack-space" slideRef={refs["slack-space"]}>Slack Space</SectionHeading>
       <p className="text-sm">
         NTFS allocates disk space in <strong>clusters</strong> (typically 4KB). A file that doesn&apos;t fill its last cluster leaves <strong>slack space</strong> — the unused bytes between the end of the file and the end of the cluster.
       </p>
@@ -133,8 +175,11 @@ that occupied the same clusters.`}
       <p className="text-sm">
         Slack space can contain fragments of old files, partial documents, or intentionally hidden data. Forensic tools examine slack space routinely.
       </p>
+      <p className="text-sm mt-2">
+        Think of slack space like unused space at the end of a paper form. The &quot;official&quot; content ends earlier, but leftovers from an old use may still be visible in the unused area.
+      </p>
 
-      <SectionHeading id="timezone">Timezone Considerations</SectionHeading>
+      <SectionHeading id="timezone" slideRef={refs.timezone}>Timezone Considerations</SectionHeading>
       <p className="text-sm">
         Getting timezones wrong is one of the most common errors in digital forensics.
       </p>
@@ -153,6 +198,18 @@ that occupied the same clusters.`}
       <Callout type="warning">
         The Registry timezone is what Windows <em>believes</em> the timezone is. If the machine was moved or the clock was manually set, this may not reflect reality. Cross-reference with NTP sync events in Event Logs.
       </Callout>
+      <Callout type="info" title="Transcript Sidenote">
+        The final lecture added several real-world complications to timezone interpretation: user misconfiguration, daylight-saving shifts, BIOS battery issues, and NTP corrections can all change what a timestamp appears to mean. The transcript wording was blunt: <strong>do not assume everything is UTC</strong> just because the bytes look clean and technical.
+      </Callout>
+      <CodeBlock lang="Timezone-related commands">
+        {`# Windows live system
+tzutil /g
+reg query "HKLM\SYSTEM\CurrentControlSet\Control\TimeZoneInformation"
+
+# Linux examiner workstation
+timedatectl
+date -u`}
+      </CodeBlock>
 
     </div>
   );

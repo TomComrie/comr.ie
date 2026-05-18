@@ -1,16 +1,26 @@
-import { Callout, Table, SectionHeading, SubHeading, T, Steps } from "@/components/ContentComponents";
+import { Callout, Table, SectionHeading, SubHeading, T, Steps, CodeBlock } from "@/components/ContentComponents";
+import { slideReferences } from "@/lib/slide-references";
 
 export default function ForensicsFoundationsContent() {
+  const refs = slideReferences["forensics-foundations"];
+
   return (
     <div className="space-y-1 text-slate-700 leading-relaxed">
 
-      <SectionHeading id="acpo">ACPO Principles</SectionHeading>
+      <Callout type="info">
+        Beginner mental model: digital forensics is not just "looking around a computer". It is a disciplined process for identifying potential digital evidence, preserving it, analysing it, and explaining what it does and does not show.
+      </Callout>
+
+      <SectionHeading id="acpo" slideRef={refs.acpo}>ACPO Principles</SectionHeading>
       <p>
         The <strong>ACPO Guidelines</strong> (Association of Chief Police Officers) are the foundational principles governing digital forensics in the UK. They establish what investigators must do to ensure evidence is admissible and integrity is maintained.
       </p>
       <Callout type="key">
         These four principles are foundational — expect exam questions about them. Know them verbatim and know why each matters.
       </Callout>
+      <p className="text-sm mt-2">
+        The spirit behind all four principles is simple: if your actions damage trust in the evidence, your technical skill stops mattering. A perfect analysis of contaminated evidence is still weak evidence.
+      </p>
 
       <div className="space-y-4 my-4">
         {[
@@ -47,7 +57,10 @@ export default function ForensicsFoundationsContent() {
         ))}
       </div>
 
-      <SectionHeading id="evidence-types">Types of Digital Evidence</SectionHeading>
+      <SectionHeading id="evidence-types" slideRef={refs["evidence-types"]}>Types of Digital Evidence</SectionHeading>
+      <p className="text-sm">
+        A lot of early forensics mistakes come from assuming all evidence behaves like a file on disk. It does not. Some evidence disappears on power-off, some survives reboot, and some exists in third-party systems such as routers, cloud platforms, or central log collectors.
+      </p>
 
       <Table
         headers={["Category", "Examples", "Lifespan"]}
@@ -58,8 +71,22 @@ export default function ForensicsFoundationsContent() {
           ["Networked", "Router logs, DHCP leases, firewall logs, cloud storage", "Varies by retention policy"],
         ]}
       />
+      <CodeBlock lang="Common evidence collection commands">
+        {`# Linux memory / system-state examples
+ps aux
+ss -tunap
+who
+last
 
-      <SectionHeading id="order-volatility">Order of Volatility</SectionHeading>
+# Disk imaging examples
+sudo dd if=/dev/sdb of=/mnt/evidence.img bs=4M status=progress
+sudo dcfldd if=/dev/sdb of=/mnt/evidence.img hash=sha256 hashlog=hash.txt
+
+# Hash verification
+sha256sum /mnt/evidence.img`}
+      </CodeBlock>
+
+      <SectionHeading id="order-volatility" slideRef={refs["order-volatility"]}>Order of Volatility</SectionHeading>
       <p className="text-sm">
         Evidence must be collected in order from most volatile (lost soonest) to least volatile. <strong>Always collect volatile evidence first</strong> before powering off the device.
       </p>
@@ -89,7 +116,7 @@ export default function ForensicsFoundationsContent() {
         Exam question pattern: &quot;A server is powered on and running. In what order should you collect evidence?&quot; — answer with the volatility order above, starting with RAM capture before disk imaging.
       </Callout>
 
-      <SectionHeading id="chain-custody">Chain of Custody</SectionHeading>
+      <SectionHeading id="chain-custody" slideRef={refs["chain-custody"]}>Chain of Custody</SectionHeading>
       <p className="text-sm">
         The <strong>chain of custody</strong> is the documented record of every person who handled the evidence, when they handled it, where it was, and what they did with it. A broken chain of custody can make evidence inadmissible.
       </p>
@@ -102,8 +129,14 @@ export default function ForensicsFoundationsContent() {
         <li>Storage conditions</li>
         <li>Hash values (before and after any examination)</li>
       </ul>
+      <p className="text-sm mt-2">
+        A simple way to remember chain of custody is: <strong>what item, who had it, when, where, why, and in what condition</strong>. If one of those questions cannot be answered clearly, the defence will attack that gap.
+      </p>
+      <Callout type="info" title="Transcript Sidenote">
+        The lecture made the legal consequence very explicit: if the chain of custody is broken, the evidence may become weak or unusable in court. That framing is worth keeping in mind because it explains why documentation quality is not an administrative afterthought.
+      </Callout>
 
-      <SectionHeading id="acquisition">Forensic Acquisition</SectionHeading>
+      <SectionHeading id="acquisition" slideRef={refs.acquisition}>Forensic Acquisition</SectionHeading>
 
       <SubHeading>Write Blockers</SubHeading>
       <p className="text-sm">
@@ -127,6 +160,20 @@ export default function ForensicsFoundationsContent() {
           ["dcfldd", "CLI", "Enhanced dd with hash verification and progress"],
         ]}
       />
+      <CodeBlock lang="Acquisition and verification workflow">
+        {`# Identify the drive carefully first
+lsblk
+
+# Acquire a bit-for-bit image
+sudo dd if=/dev/sdb of=/cases/disk01.img bs=4M status=progress conv=noerror,sync
+
+# Hash original and image
+sudo sha256sum /dev/sdb
+sha256sum /cases/disk01.img`}
+      </CodeBlock>
+      <Callout type="info" title="Transcript Sidenote">
+        The later forensics lecture called collection and acquisition the <strong>gold standard</strong> part of the process because everything after that depends on what you preserved from the scene. If collection is poor, later analysis quality cannot fully repair it.
+      </Callout>
 
       <SubHeading>Hash Verification</SubHeading>
       <p className="text-sm">
@@ -135,8 +182,11 @@ export default function ForensicsFoundationsContent() {
       <Callout type="key">
         MD5 for legacy compatibility; SHA-256 is preferred for new investigations. A matching hash proves the image is an exact copy. Any modification — even 1 bit — produces a completely different hash.
       </Callout>
+      <p className="text-sm mt-2">
+        Be careful with the wording here. A matching hash does not prove who created a file or when; it proves <em>integrity equivalence</em> between the original and the image at the time the hashes were taken.
+      </p>
 
-      <SectionHeading id="locard">Locard&apos;s Exchange Principle</SectionHeading>
+      <SectionHeading id="locard" slideRef={refs.locard}>Locard&apos;s Exchange Principle</SectionHeading>
       <p className="text-sm">
         Edmond Locard (French criminologist) stated: <em>&quot;Every contact leaves a trace.&quot;</em> In physical forensics, a criminal leaves traces at the scene and takes traces away.
       </p>

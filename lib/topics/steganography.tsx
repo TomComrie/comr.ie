@@ -1,10 +1,17 @@
 import { Callout, Table, SectionHeading, SubHeading, T, CodeBlock } from "@/components/ContentComponents";
+import { slideReferences } from "@/lib/slide-references";
 
 export default function SteganographyContent() {
+  const refs = slideReferences.steganography;
+
   return (
     <div className="space-y-1 text-slate-700 leading-relaxed">
 
-      <SectionHeading id="steg-intro">What is Steganography?</SectionHeading>
+      <Callout type="info">
+        Beginner mental model: encryption hides <em>meaning</em>; steganography hides <em>existence</em>. If encryption is a locked box, steganography is hiding the box inside something innocent-looking.
+      </Callout>
+
+      <SectionHeading id="steg-intro" slideRef={refs["steg-intro"]}>What is Steganography?</SectionHeading>
       <p>
         <strong>Steganography</strong> is the practice of hiding data <em>within</em> other data so that the very existence of the hidden message is concealed. Unlike encryption (which hides the <em>content</em>), steganography hides the <em>fact</em> that a message exists at all.
       </p>
@@ -14,6 +21,18 @@ export default function SteganographyContent() {
       <Callout type="info">
         Steganography ≠ cryptography. Crypto makes content unreadable; stego makes communication undetectable. They are often used together: encrypt then hide.
       </Callout>
+      <Callout type="info" title="Transcript Sidenote">
+        The transcript frames stego systems around <strong>three considerations</strong>: (1) <strong>capacity</strong> — how much data can be embedded? (you cannot hide a 4K image in an emoji), (2) <strong>security</strong> — how hard is it for an adversary to detect hidden data?, (3) <strong>robustness</strong> — how much modification can the carrier endure before the hidden data is lost? This is a useful exam framework for evaluating stego techniques.
+      </Callout>
+      <Callout type="info" title="Transcript Sidenote">
+        <strong>Number-of-bits tradeoff:</strong> Using 1 LSB per channel keeps the stego image nearly identical to the cover, but the recovered hidden image is barely recognisable. Using 4 bits gives a good balance — both images are reasonably preserved. Using 7 bits destroys the cover image entirely, making the steganography obvious. In the lab, students are expected to experiment with this tradeoff.
+      </Callout>
+      <Callout type="info" title="Transcript Sidenote">
+        <strong>Download, don't copy:</strong> A common practical pitfall — copying an image through the browser interface re-encodes it, destroying LSB-embedded data. You must download the image directly (right-click → save, or use <T>wget</T>). This is a known lab issue students are expected to figure out themselves.
+      </Callout>
+      <p className="text-sm mt-2">
+        This distinction matters in exams. If a hidden message is discovered but not encrypted, the secrecy is gone. If it is encrypted but obviously present, an attacker still knows something suspicious exists. Combining both gives confidentiality and concealment.
+      </p>
       <Table
         headers={["Concept", "Definition"]}
         rows={[
@@ -25,7 +44,14 @@ export default function SteganographyContent() {
         ]}
       />
 
-      <SectionHeading id="steg-techniques">Techniques</SectionHeading>
+      <Callout type="info" title="Transcript Sidenote">
+        <strong>Threat model difference (crypto vs stego):</strong> The lecture contrasts the two assumptions. Cryptography assumes the adversary sees everything on the channel and attacks continuously — security rests on mathematical hardness. Steganography assumes the adversary <em>doesn't even know communication is happening</em> — security rests on concealment. If an encrypted message is intercepted, the adversary knows <em>something</em> is being hidden. Stego adds deniability: you can claim the carrier is innocent.
+      </Callout>
+
+      <SectionHeading id="steg-techniques" slideRef={refs["steg-techniques"]}>Techniques</SectionHeading>
+      <p className="text-sm">
+        A useful way to think about steganography techniques is to ask <em>what part of the carrier can be changed without humans noticing?</em> In images that is often low-order pixel data; in compressed formats it may be transform coefficients; in audio it may be faint echo or tiny sample changes.
+      </p>
 
       <SubHeading>LSB (Least Significant Bit) — Spatial Domain</SubHeading>
       <p className="text-sm">
@@ -47,6 +73,9 @@ An 800×600 RGB image has 800×600×3 = 1,440,000 bytes
       <p className="text-sm">
         JPEG compression uses Discrete Cosine Transform (DCT). Steganography tools like <strong>OutGuess</strong> and <strong>F5</strong> embed data in DCT coefficients, making it more resilient to JPEG compression than LSB.
       </p>
+      <p className="text-sm mt-2">
+        This is a good exam contrast: LSB is intuitive and easy but fragile; frequency-domain hiding is more technically involved but usually survives normal JPEG processing better.
+      </p>
 
       <SubHeading>Audio Steganography</SubHeading>
       <p className="text-sm">
@@ -63,7 +92,10 @@ An 800×600 RGB image has 800×600×3 = 1,440,000 bytes
         On NTFS, Alternate Data Streams can hide files within files. A 100MB video could be attached invisibly to a 1KB text file. See the <a href="/forensics-deleted#ads" className="text-teal-600 hover:underline">ADS section in Deleted Files</a>.
       </p>
 
-      <SectionHeading id="steg-tools">Tools</SectionHeading>
+      <SectionHeading id="steg-tools" slideRef={refs["steg-tools"]}>Tools</SectionHeading>
+      <p className="text-sm">
+        In practical work, steganography is often solved by workflow rather than brilliance. The fastest path is to start with cheap checks, then escalate only if needed: identify the file type, inspect metadata, search for strings, check for embedded files, then test stego-specific tools.
+      </p>
 
       <Table
         headers={["Tool", "Purpose", "Key Commands"]}
@@ -115,7 +147,10 @@ steghide extract -sf suspicious.jpg -p ""
 steghide info suspicious.jpg`}
       </CodeBlock>
 
-      <SectionHeading id="steg-detection">Detection & Steganalysis</SectionHeading>
+      <SectionHeading id="steg-detection" slideRef={refs["steg-detection"]}>Detection & Steganalysis</SectionHeading>
+      <p className="text-sm">
+        Steganalysis is difficult because success often means <em>proving something subtle about normality</em>. You are often not recovering the message immediately; you are building confidence that the carrier is statistically or structurally unusual.
+      </p>
 
       <SubHeading>Visual Inspection</SubHeading>
       <p className="text-sm">
@@ -131,6 +166,15 @@ steghide info suspicious.jpg`}
       <p className="text-sm">
         A stego file is often slightly larger than the original. Significant size increase relative to visual complexity is suspicious.
       </p>
+      <SubHeading>Operational workflow for unknown files</SubHeading>
+      <ol className="list-decimal pl-5 space-y-1 text-sm">
+        <li>Identify the real file type with <T>file</T></li>
+        <li>Check metadata with <T>exiftool</T></li>
+        <li>Search for obvious strings and embedded markers</li>
+        <li>Run <T>binwalk</T> for nested or appended data</li>
+        <li>Use format-specific tools such as <T>zsteg</T> or <T>steghide</T></li>
+        <li>Only then move to deeper statistical analysis or manual hex inspection</li>
+      </ol>
 
       <SubHeading>Metadata Examination</SubHeading>
       <p className="text-sm">
